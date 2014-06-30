@@ -32,5 +32,6 @@ Added features:
 make      
       
 //Command line arguments:      
-./bfint [program_name.bf]     
-      
+./BFint [program_name.bf]     
+    
+![Alt ext](/windows_usage.png?raw=true)  

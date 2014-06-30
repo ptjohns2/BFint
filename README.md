@@ -24,7 +24,7 @@ Max program length: 32768 instructions (after instruction collapse optimization)
    
 Added features:   
 -Infinite loop detection and halting (will stop at "[]" if tape[p]!=0 and notify user of infinite loop)      
--Instruction collapsing ("++++++++++-[-+>>>+.]---" collapses to "+9[>3+1.]+2")      
+-Instruction collapsing ("++++++++++-[-+>>>+.]---" collapses to "+9[>3+1.]-3")      
 -Expensive code snippet precomputation ("[-]" or "[+]" optimized to tape[p]=0, etc)      
       
 ==USAGE==      

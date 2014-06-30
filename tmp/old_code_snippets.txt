@@ -1,0 +1,336 @@
+
+
+
+void bfcpu::readStringToRawProgram(string programString){
+	unsigned int i=0;
+	int pc=0;
+	int numNests = 0;
+	for(; i<PROGRAM_SIZE-1 && i<programString.length(); i++){
+		if(	programString[i] == '+' || 
+			programString[i] == '-' || 
+			programString[i] == '>' || 
+			programString[i] == '<' || 
+			programString[i] == '[' || 
+			programString[i] == ']' || 
+			programString[i] == '.' || 
+			programString[i] == ',')
+		{
+			if(programString[i] == '['){numNests++;}
+			program[pc] = programString[i];
+			pc++;
+		}
+	}
+	programLength = pc;
+	stack.setSize(numNests);
+}
+
+
+
+
+void bfcpu::runRawProgram(){
+	/*
+	int pcProg = 0;
+	cout << program << '\n';
+	*/
+
+	do{
+		/*
+		if(pc>pcProg){pcProg = pc;}
+		cout << '\r';
+		//for(int spaces = 0; spaces<75; spaces++){cout << ' ';}
+		//cout << '\r';
+		for(int spaces = 0; spaces<pcProg; spaces++){cout << ' ';}
+		cout << '^';
+		//cout << '\n' << pc << '\t' << program[pc];
+		//cout << program[pc];
+		*/
+	
+		switch(program[pc]){
+			case '>':
+				p++;
+				p %= TAPE_SIZE;
+				pc++;
+				break;
+			case '<':
+				p--;
+				p %= TAPE_SIZE;
+				pc++;
+				break;
+			case '+':
+				tape[p]++;
+				pc++;
+				break;
+			case '-':
+				tape[p]--;
+				pc++;
+				break;
+			case '.':
+				putchar(tape[p]);
+				pc++;
+				break;
+			case ',':
+				tape[p] = getchar();
+				pc++;
+				break;
+			case '[':
+				if(tape[p]){
+					//push to stack to come back here later
+					stack.push(pc);
+					pc++;
+				}else{
+					//move past this loop body, skipping nested loops
+					int numNests = 1;
+					pc++;
+					while(true){
+						if(program[pc] == '['){
+							numNests++;
+						}else if(program[pc] == ']'){
+							numNests--;
+						}
+						//matching end bracket found
+						if(numNests == 0){break;}
+						pc++;
+					}
+					pc++;
+				}
+				break;
+			case ']':
+				if(tape[p]){
+					pc = stack.peak();
+				}else{
+					stack.pop();
+				}
+				pc++;
+				break;
+			default:
+				cout << "Error: invalid instruction";
+		}
+	}while(pc < programLength);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void bfcpu::runOptimizedProgram_operatorCollapse(){
+	do{
+		if(program[pc] == '+'){
+			pc++;
+			tape[p] += program[pc];
+			pc++;
+		}else if(program[pc] == '>'){
+			pc++;
+			p += program[pc];
+			p %= TAPE_SIZE;
+			pc++;
+		}else if(program[pc] == '['){
+			if(tape[p]){
+				//push current pc to stack to come back here later
+				stack.push(pc);
+				pc++;
+			}else{
+				//find next matching end bracket ]
+				int numNests = 1;
+				pc++;
+				while(true){
+					if(program[pc] == '['){
+						numNests++;
+					}else if(program[pc] == ']'){
+						numNests--;
+					}
+					//matching end bracket ] found
+					if(numNests == 0){break;}
+					pc++;
+				}
+				//skip past matching end bracket ]
+				pc++;
+			}
+		}else if(program[pc] == ']'){
+			if(tape[p]){
+				pc = stack.peak();
+			}else{
+				stack.pop();
+			}
+			pc++;
+		}else if(program[pc] == '.'){
+			putchar(tape[p]);
+			pc++;
+		}else if(program[pc] == ','){
+			tape[p] = getchar();
+			pc++;
+		}else{
+			char unrecognizedInstruction = program[pc];
+			cout << unrecognizedInstruction;
+		}
+	}while(pc < programLength);
+}
+
+
+
+
+
+
+
+
+
+void bfcpu::runOptimizedProgram_operatorCollapseCaseSwitch(){
+	do{
+		switch(program[pc]){
+		case '+':
+			pc++;
+			tape[p] += program[pc];
+			pc++;
+			break;
+		case ',':
+			tape[p] = getchar();
+			pc++;
+			break;
+		case '.':
+			putchar(tape[p]);
+			pc++;
+			break;
+		case '>':
+			pc++;
+			p += program[pc];
+			p %= TAPE_SIZE;
+			pc++;
+			break;
+		case '[':			
+			if(tape[p]){
+				//push current pc to stack to come back here later
+				stack.push(pc);
+				pc++;
+			}else{
+				//find next matching end bracket ]
+				int numNests = 1;
+				pc++;
+				while(true){
+					if(program[pc] == '['){
+						numNests++;
+					}else if(program[pc] == ']'){
+						numNests--;
+					}
+					//matching end bracket ] found
+					if(numNests == 0){break;}
+					pc++;
+				}
+				//skip past matching end bracket ]
+				pc++;
+			}
+			break;
+		case ']':			
+			if(tape[p]){
+				pc = stack.peak();
+			}else{
+				stack.pop();
+			}
+			pc++;
+			break;
+		default:
+			cout << "Error: unrecognized instruction";
+			break;
+		}
+	}while(pc < programLength);
+}
+
+
+
+
+
+
+
+
+
+
+
+void bfcpu::runOptimizedProgram_operatorCollapseJumpTable(){
+	void (bfcpu::*jumpTable[94])() = {NULL};
+	jumpTable['+'] = &bfcpu::instructionPlus;
+	jumpTable['-'] = &bfcpu::instructionMinus;
+	jumpTable['<'] = &bfcpu::instructionLeftArrow;
+	jumpTable['>'] = &bfcpu::instructionRightArrow;
+	jumpTable['['] = &bfcpu::instructionLeftBracket;
+	jumpTable[']'] = &bfcpu::instructionRightBracket;
+	jumpTable['.'] = &bfcpu::instructionPeriod;
+	jumpTable[','] = &bfcpu::instructionComma;
+
+	do{
+		(this->*jumpTable[program[pc]])();
+	}while(pc < programLength);
+
+}
+
+void bfcpu::instructionPlus(){
+	pc++;
+	tape[p] += program[pc];
+	pc++;
+}
+void bfcpu::instructionMinus(){
+	pc++;
+	tape[p] += program[pc];
+	pc++;
+}
+void bfcpu::instructionRightArrow(){
+	pc++;
+	p += program[pc];
+	p %= TAPE_SIZE;
+	pc++;
+}
+void bfcpu::instructionLeftArrow(){
+	pc++;
+	p += program[pc];
+	p %= TAPE_SIZE;
+	pc++;
+}
+void bfcpu::instructionLeftBracket(){
+	if(tape[p]){
+		//push current pc to stack to come back here later
+		stack.push(pc);
+		pc++;
+	}else{
+		//find next matching end bracket ]
+		int numNests = 1;
+		pc++;
+		while(true){
+			if(program[pc] == '['){
+				numNests++;
+			}else if(program[pc] == ']'){
+				numNests--;
+			}
+			//matching end bracket ] found
+			if(numNests == 0){break;}
+			pc++;
+		}
+		//skip past matching end bracket ]
+		pc++;
+	}
+}
+void bfcpu::instructionRightBracket(){
+	if(tape[p]){
+		pc = stack.peak();
+	}else{
+		stack.pop();
+	}
+	pc++;
+}
+void bfcpu::instructionPeriod(){
+	putchar(tape[p]);
+	pc++;
+}
+void bfcpu::instructionComma(){
+	tape[p] = getchar();
+	pc++;
+}
+
+
+

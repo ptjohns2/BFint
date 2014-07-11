@@ -6,17 +6,17 @@
 http://esolangs.org/wiki/brainfuck  
   
 Brainf*ck is an esoteric programming language consisting of:  
-- An array of chars   
-- A pointer to somewhere in the array   
-- 8 commands:   
-> >		p++    
-> <		p--     
-> +		*p++     
-> -		*p--     
-> .		putchar(*p)     
-> ,		*p = getchar()     
-> [		while(*p) - start     
-> ]		while(*p) - end     
+-An array of chars   
+-A pointer to somewhere in the array   
+-8 commands:   
+>		p++    
+<		p--     
++		*p++     
+-		*p--     
+.		putchar(*p)     
+,		*p = getchar()     
+[		while(*p) - start     
+]		while(*p) - end     
 
 ###Specifications
 - Tape: size 30000 array of unsigned chars   

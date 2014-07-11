@@ -9,6 +9,7 @@ Brainf*ck is an esoteric programming language consisting of:
 - An array of chars   
 - A pointer to somewhere in the array   
 - 8 commands:   
+
 >		p++    
 <		p--     
 +		*p++     
